@@ -1,0 +1,210 @@
+import cv2 as cv
+import numpy as np
+import os
+import time
+from random import randint
+from openpyxl import Workbook
+
+def background(image):
+    frame = mask(image)
+    #blur = cv.pyrMeanShiftFiltering(image,sp=60,sr=60)
+    #d_frame = cv.cvtColor(blur,cv.COLOR_BGR2GRAY)
+    #d_frame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)
+    d_frame = cv.GaussianBlur(frame,(3,3),0)
+    ret, binary = cv.threshold(d_frame, 98, 255, cv.THRESH_BINARY_INV)
+    ret, binary = cv.threshold(binary, 0, 255, cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (1, 1))
+    opening = cv.morphologyEx(binary, cv.MORPH_OPEN, kernel=kernel, iterations=4)
+    sure_bg = cv.dilate(opening, kernel, iterations=1)
+    cv.imshow('b',sure_bg)
+    return sure_bg
+
+def water(image):
+    frame = mask(image)
+    cv.imshow('frame',frame)
+    ret, binary = cv.threshold(frame, 0, 255, cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (1, 1))
+    opening = cv.morphologyEx(binary, cv.MORPH_OPEN, kernel=kernel, iterations=3)
+    sure_bg = cv.dilate(opening, kernel, iterations=5)
+    dist = cv.distanceTransform(opening, cv.DIST_L2, 5)
+    #cv.imshow('dist',dist)
+    dist_out = cv.normalize(dist, 0, 1.0, cv.NORM_MINMAX)
+    ret, surface = cv.threshold(dist_out, dist_out.max() * 0.5, 255, cv.THRESH_BINARY)
+    surface_fg = np.uint8(surface)    # 转成8位整型
+    unknown = cv.subtract(sure_bg, surface_fg)
+    #cv.imshow('bg',sure_bg)
+    ret, markers = cv.connectedComponents(surface_fg)  # 连通区域
+
+    markers = markers + 1
+    markers[unknown == 255] = 0
+    markers = cv.watershed(image, markers=markers)
+    image[markers == -1] = [0, 0, 255]
+    cv.imshow('result', image)
+    image[markers == -1] = [0, 0, 0]      # 被标记的区域   
+    after_watershed = cv.cvtColor(image,cv.COLOR_BGR2GRAY)
+    ret, after_watershed = cv.threshold(after_watershed,1,255,cv.THRESH_BINARY)
+    ret, test = cv.threshold(after_watershed, 0, 255, cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+    cv.imshow('result', image)
+    cv.imshow('test',test)
+    #cv.imshow('after',after_watershed)
+    #return after_watershed
+    return test
+
+def mask(frame):
+    frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    ret, frame = cv.threshold(frame, 0, 255, cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+    height, width = frame.shape[:2]
+    #print(height,width)
+    center_x, center_y = 325,325
+    r = 310
+    mask = np.zeros((height, width), dtype=np.uint8)
+    cv.circle(mask, (center_x, center_y), r, (255, 255, 255), -1)
+    frame = cv.bitwise_and(frame, frame, mask=mask)
+    cv.circle(mask, (center_x, center_y), r, (255, 255, 255), -1)
+    ret, frame = cv.threshold(frame, 0, 255, cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+    return frame
+
+
+
+
+cap = cv.VideoCapture('00171.MTS')
+success, frame = cap.read()
+#print(int(cap.get(cv.CAP_PROP_FRAME_WIDTH)))
+#print(int(cap.get(cv.CAP_PROP_FRAME_HEIGHT)))
+frame = frame[30:1000,580:1550]
+frame = cv.resize(frame, None, fx=0.7, fy=0.7)
+d_frame = background(frame)
+#d_frame = water(frame)
+counter_ids = []
+colors = []
+ellipses_dict = {}
+wb = Workbook()
+#ws1 = wb.create_sheet('果蝇聚群信息表', 0)
+ws2 = wb.create_sheet('平均距离',0)
+row = 2
+col = 2
+
+
+# 完成输出设置
+time_t = time.strftime('%Y.%m.%d %H-%M-%S', time.localtime(time.time()))
+outDir = 'F:/科研/视频和分析_' + time_t
+os.mkdir(outDir)
+outFile_1 = outDir + '\\videoTracker.avi'
+r = cap.get(cv.CAP_PROP_FPS)
+fourcc=cv.VideoWriter_fourcc(*'XVID')
+write = cv.VideoWriter(outFile_1, fourcc, r, (679,679), True)
+outFile_2 = 'SSI_' + time_t + '.xlsx'
+
+
+
+while True:
+    contours = []
+    contours_tmp, hierarchy = cv.findContours(d_frame, cv.RETR_TREE,cv.CHAIN_APPROX_NONE)
+    for i, c in enumerate(contours_tmp):
+        if not (cv.arcLength(c,True) > 190 or cv.arcLength(c,True) < 40 or len(c) < 5):
+            contours.append(c)
+
+    for i, c in enumerate(contours):   
+        if i not in counter_ids:
+            x,y,w,h = cv.boundingRect(c)
+            #cv.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 0), 1)
+            counter_ids.append(i)
+            colors.append((randint(64, 255), randint(64, 255), randint(64, 255)))
+            ellipse = cv.fitEllipse(c)
+            ellipses_dict[i] = ellipse
+            cv.ellipse(frame, ellipse, colors[i], 2)
+            cv.putText(frame, str(i+1), (int(ellipse[0][0]),int(ellipse[0][1])), cv.FONT_HERSHEY_PLAIN, 1, [0, 0, 255], 2)
+    write.write(frame)
+    cv.imshow('first_step', frame)
+            
+    if cv.waitKey(1) == ord(' '):
+        break
+    elif cv.waitKey(1) == ord('o'):
+        success, frame = cap.read()
+        frame = frame[30:1000,580:1550]
+        frame = cv.resize(frame, None, fx=0.7, fy=0.7)
+
+        d_frame = background(frame)
+        counter_ids = []
+        ellipses_dict = {}
+
+while cap.isOpened():   
+    contour_ids_o = []
+    success, frame = cap.read()
+    #if frame == None:
+        #break
+    frame = frame[30:1000,580:1550]
+    frame = cv.resize(frame, None, fx=0.7, fy=0.7)
+    d_frame = background(frame)
+    #d_frame = water(frame)
+    contours = []
+    contours_tmp, hierarchy = cv.findContours(d_frame, cv.RETR_TREE,cv.CHAIN_APPROX_NONE)
+    cv.rectangle(frame, (10, 2), (100,20), (255,255,255), -1)
+    cv.putText(frame, str(cap.get(cv.CAP_PROP_POS_FRAMES)), (15, 15),cv.FONT_HERSHEY_SIMPLEX, 0.5 , (0,0,0))
+    
+    for i, c in enumerate(contours_tmp):
+            if not (cv.arcLength(c,True) > 190 or cv.arcLength(c,True) < 60 or len(c) < 5):
+                contours.append(c)
+
+    if len(contours) == 20:
+        for i, c in enumerate(contours):   
+            #if i not in counter_ids:
+            #print(i)
+            x,y,w,h = cv.boundingRect(c)
+            #cv.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 0), 1)
+            #counter_ids.append(i)
+            ellipse = cv.fitEllipse(c)
+            #ellipse = list(ellipse)
+            #cv.ellipse(frame, ellipse, [128,72,155], 2)
+            nearest_ellipse = None
+            min_distance = float('inf')
+            for i, v in ellipses_dict.items():
+                if i not in contour_ids_o:
+                    distance = ((v[0][0] - ellipse[0][0]) ** 2 + (v[0][1] - ellipse[0][1]) ** 2) ** 0.5
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_ellipse = i
+
+            if nearest_ellipse != None:      
+                ellipses_dict[nearest_ellipse] = ellipse
+                contour_ids_o.append(nearest_ellipse)
+                cv.ellipse(frame, ellipse, colors[nearest_ellipse], 2)
+                cv.putText(frame, str(nearest_ellipse+1), (int(ellipse[0][0]),int(ellipse[0][1])), cv.FONT_HERSHEY_PLAIN, 1, [0, 0, 255], 2)
+
+        #for i, v in ellipses_dict.items():
+            #ws1.cell(row=row, column=col, value=str(ellipses_dict[i]))
+            #col = col + 1
+        b1 = 0
+        b2 = 0
+        for i,v in ellipses_dict.items():
+            nnd = 10000
+            for j,u in ellipses_dict.items():
+                dis = (((v[0][0] - u[0][0]) ** 2 + (v[0][1] - u[0][1]) ** 2) ** 0.5)/19
+                if dis < nnd:
+                    if dis > 0:
+                        nnd = dis
+
+            if nnd < 5: b1 = b1 + 1
+            if 5 < nnd < 10: b2 = b2 + 1
+        ws2.cell(row = row, column = 2, value = str(b1 - b2))
+
+    #ws1.cell(row = row, column = 1, value = str(cap.get(cv.CAP_PROP_POS_FRAMES)))
+    ws2.cell(row = row, column = 1, value = str(cap.get(cv.CAP_PROP_POS_FRAMES)))
+    row = row + 1
+    col = 2
+    write.write(frame)     
+    cv.imshow('okframe', frame)
+        
+    
+    #cv.waitKey(1)
+    if cv.waitKey(1) == ord('q'):
+        break
+    #print(ellipses_dict)
+wb.save(str(outFile_2))    
+cap.release()
+write.release()
+cv.destroyAllWindows()
+
+
+                    
+      
