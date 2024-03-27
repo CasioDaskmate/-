@@ -8,7 +8,7 @@ from openpyxl import Workbook
 from scipy.optimize import curve_fit
 
 D = 756
-number = 44
+number = 49
 
 #二元高斯函数
 def gaussian(xy, amplitude, center_x, center_y, sigma_x, sigma_y):
@@ -69,7 +69,7 @@ def frame_number(frame):
     cv.putText(frame, str(cap.get(cv.CAP_PROP_POS_FRAMES)), (15, 15),cv.FONT_HERSHEY_SIMPLEX, 0.5 , (0,0,0))
     return frame
 
-cap = cv.VideoCapture("F:/科研/视频_2024.03.03/output_video_2.avi")
+cap = cv.VideoCapture("F:/科研/视频_2024.02.02/output_video.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2023.9.28/output_video_cut_1.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2023.10.13/output_video_cut_3.avi")
 success, frame = cap.read()
