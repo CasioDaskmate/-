@@ -88,12 +88,13 @@ wb = Workbook()
 ws = wb.create_sheet('平均距离变化表', 0)
 dis_average = 0
 
+'''
 #完成输出设置
 time_t = time.strftime('%Y.%m.%d %H-%M-%S', time.localtime(time.time()))
 outDir = 'F:/科研/平均距离分析_' + time_t
 os.mkdir(outDir)
 outFile = outDir + '平均距离变化_' + time_t + '.xlsx'
-
+'''
 
 while True:
     contours = []
@@ -181,11 +182,7 @@ while cap.isOpened():
 
 #print(datas)
 #这里已经把所有数据输进datas了，直接用matlab画图就行了
-#plt.scatter(datas[:, 0], datas[:, 1], label='test')
-#plt.xlabel('X')
-#plt.ylabel('Y')
-#plt.legend()
-#plt.show()
-wb.save(str(outFile))   
+
+#wb.save(str(outFile))   
 cap.release()
 cv.destroyAllWindows()
