@@ -6,6 +6,7 @@ from random import randint
 import time
 from openpyxl import Workbook
 from scipy.optimize import curve_fit
+import math
 
 D = 756
 number = 44
@@ -87,7 +88,7 @@ row = 0
 wb = Workbook()
 ws = wb.create_sheet('平均距离变化表', 0)
 dis_average = 0
-
+count_for_head = 0
 '''
 #完成输出设置
 time_t = time.strftime('%Y.%m.%d %H-%M-%S', time.localtime(time.time()))
@@ -113,8 +114,30 @@ while True:
             points[i][0] =  ellipses_dict[i][0][0]
             points[i][1] =  ellipses_dict[i][0][1]
             cv.ellipse(frame, ellipse, colors[i], 2)
-            cv.putText(frame, str(i+1), (int(ellipse[0][0]),int(ellipse[0][1])), cv.FONT_HERSHEY_PLAIN, 1, [0, 0, 255], 2)
+            #cv.putText(frame, str(i+1), (int(ellipse[0][0]),int(ellipse[0][1])), cv.FONT_HERSHEY_PLAIN, 1, [0, 0, 255], 2)
     
+    # 头尾识别
+    for i, v in ellipses_dict.items():
+        count_for_head = count_for_head + 1
+        if count_for_head > number:
+            break
+        
+        headn = 7
+        pixel1 = frame[int(float(v[0][1]) + float(v[1][1]+ headn ) * 1/2 * math.sin(math.radians(float(v[2] - 90)))), int(float(v[0][0]) + float(v[1][1]+ headn ) * 1/2 * math.cos(math.radians(float(v[2] - 90))))]
+        pixel2 = frame[int(float(v[0][1]) - float(v[1][1]+ headn ) * 1/2 * math.sin(math.radians(float(v[2] - 90)))), int(float(v[0][0]) - float(v[1][1]+ headn ) * 1/2 * math.cos(math.radians(float(v[2] - 90))))]
+        gray_value1 = sum(pixel1) / 3
+        gray_value2 = sum(pixel2) / 3
+        # print(pixel1,pixel2)
+        # print(gray_value1,gray_value2)
+        if gray_value1 < gray_value2 :
+            v_list = list(v)
+            v_list[2] = v_list[2] + 180
+            v = tuple(v_list)
+            ellipses_dict[i] = tuple(v_list)
+        cv.circle(frame,(int(float(v[0][0]) + float(v[1][1]) * 1/2 * math.cos(math.radians(float(v[2] - 90)))),int(float(v[0][1]) + float(v[1][1]) * 1/2 * math.sin(math.radians(float(v[2] - 90))))),3, (0, 0, 255), -1)
+
+
+
     gaussian_center_x,gaussian_center_y = gaussian_center(points)
     cv.circle(frame, (int(gaussian_center_x),int(gaussian_center_y)), 5, (0, 0, 255), -1)
     cv.imshow('first_step', frame)
@@ -172,6 +195,24 @@ while cap.isOpened():
                 min_dis = dis
         dis_total = dis_total - min_dis - max_dis   
         dis_average = dis_total/number-2
+
+    for i, v in ellipses_dict.items():        
+        headn = 7
+        pixel1 = frame[int(float(v[0][1]) + float(v[1][1]+ headn ) * 1/2 * math.sin(math.radians(float(v[2] - 90)))), int(float(v[0][0]) + float(v[1][1]+ headn ) * 1/2 * math.cos(math.radians(float(v[2] - 90))))]
+        pixel2 = frame[int(float(v[0][1]) - float(v[1][1]+ headn ) * 1/2 * math.sin(math.radians(float(v[2] - 90)))), int(float(v[0][0]) - float(v[1][1]+ headn ) * 1/2 * math.cos(math.radians(float(v[2] - 90))))]
+        gray_value1 = sum(pixel1) / 3
+        gray_value2 = sum(pixel2) / 3
+        # print(pixel1,pixel2)
+        # print(gray_value1,gray_value2)
+        if gray_value1 < gray_value2 :
+            v_list = list(v)
+            v_list[2] = v_list[2] + 180
+            v = tuple(v_list)
+            ellipses_dict[i] = tuple(v_list)
+        cv.circle(frame,(int(float(v[0][0]) + float(v[1][1]) * 1/2 * math.cos(math.radians(float(v[2] - 90)))),int(float(v[0][1]) + float(v[1][1]) * 1/2 * math.sin(math.radians(float(v[2] - 90))))),3, (0, 0, 255), -1)
+
+
+
 
     ws.cell(row = row + 1, column = 1, value = str(cap.get(cv.CAP_PROP_POS_FRAMES)))
     ws.cell(row = row + 1, column = 2, value = str(dis_average))   
