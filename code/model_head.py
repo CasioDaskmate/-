@@ -196,6 +196,7 @@ while cap.isOpened():
         dis_total = dis_total - min_dis - max_dis   
         dis_average = dis_total/number-2
 
+    # 头尾识别
     for i, v in ellipses_dict.items():        
         headn = 7
         pixel1 = frame[int(float(v[0][1]) + float(v[1][1]+ headn ) * 1/2 * math.sin(math.radians(float(v[2] - 90)))), int(float(v[0][0]) + float(v[1][1]+ headn ) * 1/2 * math.cos(math.radians(float(v[2] - 90))))]
