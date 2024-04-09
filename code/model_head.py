@@ -84,6 +84,7 @@ ellipses_dict = {}
 contours = []
 points = np.zeros((number, 2))
 datas = np.zeros((int(cap.get(cv.CAP_PROP_FRAME_COUNT)),number))
+last_datas = {}
 row = 0
 wb = Workbook()
 ws = wb.create_sheet('平均距离变化表', 0)
@@ -159,6 +160,9 @@ while cap.isOpened():
                 contours.append(c)
 
     if len(contours) == number:
+        for i,v in ellipses_dict.items():
+            last_datas[i] = v
+
         for i, c in enumerate(contours):   
             x,y,w,h = cv.boundingRect(c)
             ellipse = cv.fitEllipse(c)
@@ -216,7 +220,7 @@ while cap.isOpened():
 
 
     ws.cell(row = row + 1, column = 1, value = str(cap.get(cv.CAP_PROP_POS_FRAMES)))
-    ws.cell(row = row + 1, column = 2, value = str(dis_average))   
+    ws.cell(row = row + 1, column = 2, value = str(dis_average)) 
     row = row + 1      
     cv.imshow('okframe', frame)
     if cv.waitKey(1) == ord('q'):
