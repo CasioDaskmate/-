@@ -70,7 +70,14 @@ def frame_number(frame):
     cv.putText(frame, str(cap.get(cv.CAP_PROP_POS_FRAMES)), (15, 15),cv.FONT_HERSHEY_SIMPLEX, 0.5 , (0,0,0))
     return frame
 
-cap = cv.VideoCapture("F:/科研/视频_2024.03.03/output_video_2.avi")
+def moving_state(v_in_ellipses_dict,x):
+    v_list = list(v_in_ellipses_dict)
+    extra_content = x
+    modified_list = v_list + [extra_content]
+    return modified_list
+
+cap = cv.VideoCapture("D:/科研/视频_2024.03.03/output_video_2.avi")
+#cap = cv.VideoCapture("F:/科研/视频_2024.03.03/output_video_2.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2023.9.28/output_video_cut_1.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2023.10.13/output_video_cut_3.avi")
 success, frame = cap.read()
@@ -160,6 +167,8 @@ while cap.isOpened():
                 contours.append(c)
 
     if len(contours) == number:
+
+        # 存入上一帧进last_datas，看情况是否要多存几帧
         for i,v in ellipses_dict.items():
             last_datas[i] = v
 
@@ -183,6 +192,14 @@ while cap.isOpened():
                 points[nearest_ellipse][0] =  ellipses_dict[nearest_ellipse][0][0]
                 points[nearest_ellipse][1] =  ellipses_dict[nearest_ellipse][0][1]
         
+        #判定运动情况，1表示运动，0表示静止,有两处可能需要修改：帧数差和dis_last_datas的标准
+        for i,v in ellipses_dict.items():
+            dis_last_datas = (((v[0][0] - last_datas[i][0][0]) ** 2 + (v[0][1] - last_datas[i][0][1]) ** 2) ** 0.5)
+            if dis_last_datas > 0:
+                ellipses_dict[i] = tuple(moving_state(v,1))
+            else:
+                ellipses_dict[i] = tuple(moving_state(v,0))
+
         gaussian_center_x,gaussian_center_y = gaussian_center(points)
         
         dis_total = 0
@@ -223,6 +240,8 @@ while cap.isOpened():
     ws.cell(row = row + 1, column = 2, value = str(dis_average)) 
     row = row + 1      
     cv.imshow('okframe', frame)
+    for i,v in ellipses_dict.items():
+        print(v[3])
     if cv.waitKey(1) == ord('q'):
         break
 
