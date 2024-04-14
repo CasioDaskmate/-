@@ -76,6 +76,16 @@ def moving_state(v_in_ellipses_dict,x):
     modified_list = v_list + [extra_content]
     return modified_list
 
+def pole_changing(ellipses_dict,n):
+    pole_changing_dict = {}
+    j = 0
+    for i, v in ellipses_dict.items():
+        if i != n:
+            pole_changing_j = (float(((v[0][0] - ellipses_dict[n-1][0][0]) ** 2 + (v[0][1] - ellipses_dict[n-1][0][1]) ** 2) ** 0.5),"jiaodu",ellipses_dict[i][3])
+            pole_changing_dict[j] = pole_changing_j
+            j = j + 1
+    return pole_changing_dict
+
 cap = cv.VideoCapture("D:/科研/视频_2024.03.03/output_video_2.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2024.03.03/output_video_2.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2023.9.28/output_video_cut_1.avi")
@@ -92,6 +102,7 @@ contours = []
 points = np.zeros((number, 2))
 datas = np.zeros((int(cap.get(cv.CAP_PROP_FRAME_COUNT)),number))
 last_datas = {}
+all_the_datas = {}
 row = 0
 wb = Workbook()
 ws = wb.create_sheet('平均距离变化表', 0)
@@ -172,6 +183,8 @@ while cap.isOpened():
         for i,v in ellipses_dict.items():
             last_datas[i] = v
 
+        all_the_datas[row] = last_datas
+
         for i, c in enumerate(contours):   
             x,y,w,h = cv.boundingRect(c)
             ellipse = cv.fitEllipse(c)
@@ -248,6 +261,7 @@ while cap.isOpened():
 #print(datas)
 #这里已经把所有数据输进datas了，直接用matlab画图就行了
 
+print(all_the_datas)
 #wb.save(str(outFile))   
 cap.release()
 cv.destroyAllWindows()
