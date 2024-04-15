@@ -76,6 +76,7 @@ def moving_state(v_in_ellipses_dict,x):
     modified_list = v_list + [extra_content]
     return modified_list
 
+#把数据变为以第n个为第一视角的数据
 def pole_changing(ellipses_dict,n):
     pole_changing_dict = {}
     j = 0
