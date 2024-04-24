@@ -76,6 +76,12 @@ def moving_state(v_in_ellipses_dict,x):
     modified_list = v_list + [extra_content]
     return modified_list
 
+def turning_state(v_in_ellipses_dict,x):
+    v_list = list(v_in_ellipses_dict)
+    extra_content = x
+    modified_list = v_list + [extra_content]
+    return modified_list
+
 #把数据变为以第n个为第一视角的数据
 def pole_changing(ellipses_dict,n):
     pole_changing_dict = {}
@@ -209,10 +215,17 @@ while cap.isOpened():
         #判定运动情况，1表示运动，0表示静止,有两处可能需要修改：帧数差和dis_last_datas的标准
         for i,v in ellipses_dict.items():
             dis_last_datas = (((v[0][0] - last_datas[i][0][0]) ** 2 + (v[0][1] - last_datas[i][0][1]) ** 2) ** 0.5)
-            if dis_last_datas > 0:
+            if dis_last_datas > 0.1:
                 ellipses_dict[i] = tuple(moving_state(v,1))
             else:
                 ellipses_dict[i] = tuple(moving_state(v,0))
+
+        for i,v in ellipses_dict.items():
+            angle_change = v[2] - last_datas[i][2]
+            if angle_change > 0.1 & angle_change != 180:
+                ellipses_dict[i] = tuple(turning_state(v,1))
+            else:
+                ellipses_dict[i] = tuple(turning_state(v,0))
 
         gaussian_center_x,gaussian_center_y = gaussian_center(points)
         
