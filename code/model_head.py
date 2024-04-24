@@ -88,10 +88,18 @@ def pole_changing(ellipses_dict,n):
     j = 0
     for i, v in ellipses_dict.items():
         if i != n:
-            pole_changing_j = (float(((v[0][0] - ellipses_dict[n-1][0][0]) ** 2 + (v[0][1] - ellipses_dict[n-1][0][1]) ** 2) ** 0.5),"jiaodu",ellipses_dict[i][3])
+            pole_changing_j = (float(((v[0][0] - ellipses_dict[n-1][0][0]) ** 2 + (v[0][1] - ellipses_dict[n-1][0][1]) ** 2) ** 0.5), abs(ellipses_dict[n-1][2] - angle_calculate(v[0][0],v[0][1],ellipses_dict[n-1][0][0],ellipses_dict[n-1][0][1])) ,ellipses_dict[i][3])
             pole_changing_dict[j] = pole_changing_j
             j = j + 1
     return pole_changing_dict
+
+def angle_calculate(x1,y1,x2,y2):
+    dx = x2 - x1
+    dy = y2 - y1
+    angle_rad = math.atan2(dy, dx)
+    angle_deg = math.degrees(angle_rad)
+    return angle_deg
+
 
 cap = cv.VideoCapture("D:/科研/视频_2024.03.03/output_video_2.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2024.03.03/output_video_2.avi")
