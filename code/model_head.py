@@ -10,6 +10,7 @@ import math
 
 D = 756
 number = 44
+n = 1
 
 #二元高斯函数
 def gaussian(xy, amplitude, center_x, center_y, sigma_x, sigma_y):
@@ -130,6 +131,9 @@ outDir = 'F:/科研/平均距离分析_' + time_t
 os.mkdir(outDir)
 outFile = outDir + '平均距离变化_' + time_t + '.xlsx'
 '''
+time_t = time.strftime('%Y.%m.%d %H-%M-%S', time.localtime(time.time()))
+#os.makedirs(os.path.join('data'),exist_ok=True)
+data_file = os.path.join('data','test'+time_t+'.csv')
 
 while True:
     contours = []
@@ -275,16 +279,22 @@ while cap.isOpened():
     ws.cell(row = row + 1, column = 2, value = str(dis_average)) 
     row = row + 1      
     cv.imshow('okframe', frame)
-    print(pole_changing(ellipses_dict,1))
+    with open(data_file, 'a') as f:
+        # 将要写入的数据转换为字符串
+        data_str = f"{ellipses_dict[n-1][3]},{ellipses_dict[n-1][4]},{pole_changing(ellipses_dict, n)}\n"
+        # 将数据写入文件
+        f.write(data_str)
+    '''
     for i,v in ellipses_dict.items():
         print(v[3])
+    '''    
     if cv.waitKey(1) == ord('q'):
         break
 
 #print(datas)
 #这里已经把所有数据输进datas了，直接用matlab画图就行了
 
-print(all_the_datas)
+#print(all_the_datas)
 #wb.save(str(outFile))   
 cap.release()
 cv.destroyAllWindows()
