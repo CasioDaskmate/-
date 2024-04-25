@@ -87,7 +87,7 @@ def pole_changing(ellipses_dict,n):
     pole_changing_dict = {}
     j = 0
     for i, v in ellipses_dict.items():
-        if i != n:
+        if i != n-1 :
             pole_changing_j = (float(((v[0][0] - ellipses_dict[n-1][0][0]) ** 2 + (v[0][1] - ellipses_dict[n-1][0][1]) ** 2) ** 0.5), abs(ellipses_dict[n-1][2] - angle_calculate(v[0][0],v[0][1],ellipses_dict[n-1][0][0],ellipses_dict[n-1][0][1])) ,ellipses_dict[i][3])
             pole_changing_dict[j] = pole_changing_j
             j = j + 1
@@ -101,8 +101,8 @@ def angle_calculate(x1,y1,x2,y2):
     return angle_deg
 
 
-cap = cv.VideoCapture("D:/科研/视频_2024.03.03/output_video_2.avi")
-#cap = cv.VideoCapture("F:/科研/视频_2024.03.03/output_video_2.avi")
+#cap = cv.VideoCapture("D:/科研/视频_2024.03.03/output_video_2.avi")
+cap = cv.VideoCapture("F:/科研/视频_2024.03.03/output_video_2.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2023.9.28/output_video_cut_1.avi")
 #cap = cv.VideoCapture("F:/科研/视频_2023.10.13/output_video_cut_3.avi")
 success, frame = cap.read()
@@ -230,7 +230,7 @@ while cap.isOpened():
 
         for i,v in ellipses_dict.items():
             angle_change = v[2] - last_datas[i][2]
-            if angle_change > 0.1 & angle_change != 180:
+            if angle_change > 1 and angle_change != 180:
                 ellipses_dict[i] = tuple(turning_state(v,1))
             else:
                 ellipses_dict[i] = tuple(turning_state(v,0))
@@ -275,6 +275,7 @@ while cap.isOpened():
     ws.cell(row = row + 1, column = 2, value = str(dis_average)) 
     row = row + 1      
     cv.imshow('okframe', frame)
+    print(pole_changing(ellipses_dict,1))
     for i,v in ellipses_dict.items():
         print(v[3])
     if cv.waitKey(1) == ord('q'):
