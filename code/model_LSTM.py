@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from torch.nn.utils.rnn import pad_sequence
+import matplotlib.pyplot as plt
 
 # 加载数据
 data = pd.read_csv('test.csv', header=None)
@@ -73,6 +74,10 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # 训练模型
 epochs = 10
+
+# 保存训练过程中的损失值
+train_losses = []
+
 for epoch in range(epochs):
     model.train()
     optimizer.zero_grad()
@@ -80,7 +85,19 @@ for epoch in range(epochs):
     loss = criterion(outputs, y_train_tensor)
     loss.backward()
     optimizer.step()
+    
+    # 保存训练过程中的损失值
+    train_losses.append(loss.item())
+    
     print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item()}')
+
+# 可视化训练过程中的损失值
+plt.plot(range(1, epochs+1), train_losses, label='Training Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Training Loss')
+plt.legend()
+plt.show()
 
 # 测试模型
 model.eval()
