@@ -7,12 +7,12 @@ import cv2 as cv
 #original_video_path = "F:/科研/视频_2023.8.19_60_20_not_naive/C0019.MP4"
 #original_video_path = "F:/科研/视频_2023.9.28/C0013.MP4"
 #original_video_path = "F:/科研/视频_2023.10.13/C0014.MP4"
-original_video_path = "F:/科研/视频_2024.02.02/C0001.MP4"
+original_video_path = "D:/科研/视频_2024.04.02/C0052.MP4"
 cap = cv.VideoCapture(original_video_path)
 
 # 设置开始提取的时间点（以秒为单位）
-start_time = 80 *60
-end_time = 95*60
+start_time = 15 * 60
+end_time = 75 * 60
 
 # 获取视频帧率和总帧数
 frame_rate = int(cap.get(cv.CAP_PROP_FPS))
@@ -25,7 +25,7 @@ end_frame = int(end_time * frame_rate)
 # 创建输出视频的参数
 #output_video_path = "F:/科研/视频_2023.9.28/output_video_cut_1.avi"
 #output_video_path = "F:/科研/视频_2023.10.13/output_video_cut_3_cut.avi"  # 输出视频文件路径
-output_video_path = "F:/科研/视频_2024.02.02/output_video.avi"
+output_video_path = "D:/科研/视频_2024.04.02/output_video.avi"
 fourcc = cv.VideoWriter_fourcc(*'MJPG')
 output_video = cv.VideoWriter(output_video_path, fourcc, frame_rate, (int(cap.get(3)), int(cap.get(4))))
 
